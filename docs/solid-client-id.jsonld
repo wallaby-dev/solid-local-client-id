@@ -1,7 +1,7 @@
 {
   "@context": "https://www.w3.org/ns/solid/oidc-context.jsonld",
   "client_id": "https://wallaby-dev.github.io/solid-local-client-id/solid-client-id.jsonld",
-  "client_name": "keepsize (local dev)",
+  "client_name": "Local development (port 3000)",
   "redirect_uris": ["http://localhost:3000/solid/callback"],
   "scope": "openid webid offline_access",
   "grant_types": ["authorization_code", "refresh_token"],
