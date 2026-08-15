@@ -6,6 +6,11 @@ default:
 clean:
     find . -name .DS_Store -delete
 
+# Validate the Client ID Document(s) in docs/ against schema/client-id-document.schema.json
+validate:
+    python3 -m pip install --quiet -r scripts/requirements.txt
+    python3 scripts/validate_client_id_documents.py
+
 # Canonical, corrected Justfile recipes for the GitHub App agent identity
 # (see gh-agent-setup skill / gh-app-token.sh). Paste these into a repo's
 # Justfile as-is.
