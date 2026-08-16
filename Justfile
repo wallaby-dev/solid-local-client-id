@@ -20,15 +20,23 @@ validate:
 # and a single named parameter substituted inside quotes is still exposed
 # to backtick/`$()` expansion by the shell. So free text (commit messages,
 # PR bodies — both routinely contain backticks around `code`) must never
-# be interpolated directly; route it through a file instead. Titles are
-# short enough that inline text is accepted here, but keep titles free of
-# backticks/`$()` too.
+# be interpolated directly; route it through a file instead. The title is
+# short enough to stay inline, but must go through just's own `quote()`
+# builtin (`{{quote(title)}}`, no manual '...' wrapping) — a naive
+# '{{title}}' wrap breaks with "unexpected EOF" the moment the title
+# contains an apostrophe (common in real titles: "Kiboko's...",
+# "Don't...", any contraction), since just's substitution is raw text
+# inserted before bash ever parses the script, so an embedded `'` closes
+# the quote early. `quote()` escapes embedded single quotes correctly.
 #
 # First seen breaking in flint (wallaby-dev/flint#27): the original
 # version of `agent-pr` took `*ARGS` and interpolated `{{ARGS}}` straight
 # into `gh pr create {{ARGS}}` — a multi-word --title got word-split, and
 # a --body containing backticks/newlines was re-parsed as shell syntax. It
-# also didn't source gh-app.env, so GH_APP_ID etc. were unset.
+# also didn't source gh-app.env, so GH_APP_ID etc. were unset. The
+# apostrophe-in-title breakage above was found later, reproduced with the
+# title "Add Kiboko's local-dev Client ID Document" (kiboko's own
+# client-id PR, of all things).
 
 # Fetch a valid GitHub App installation token (cached, auto-refreshed)
 gh-agent-token:
@@ -48,15 +56,16 @@ agent-commit msg_file:
     export GIT_AUTHOR_EMAIL="${GH_APP_BOT_ID}+${GH_APP_SLUG}[bot]@users.noreply.github.com"
     export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
     export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
-    git commit -F "{{msg_file}}"
+    git commit -F {{quote(msg_file)}}
 
 # Open a PR authenticated as the agent identity, not the human. Body comes
-# from a file for the same reason as agent-commit; title is inline text.
-# Extra trailing flags (--draft, --reviewer someone, etc.) must each be a
-# single token — no embedded spaces.
+# from a file for the same reason as agent-commit; title is inline text,
+# routed through just's quote() so an embedded apostrophe can't break the
+# shell (see header note above). Extra trailing flags (--draft, --reviewer
+# someone, etc.) must each be a single token — no embedded spaces.
 # `just agent-pr "Fix foo" /tmp/body.md --draft`
 agent-pr title body_file *ARGS:
     #!/usr/bin/env bash
     set -euo pipefail
     source ~/.claude/gh-app.env
-    GH_TOKEN=$(~/.claude/scripts/gh-app-token.sh) gh pr create --title '{{title}}' --body-file "{{body_file}}" {{ARGS}}
+    GH_TOKEN=$(~/.claude/scripts/gh-app-token.sh) gh pr create --title {{quote(title)}} --body-file {{quote(body_file)}} {{ARGS}}
