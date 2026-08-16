@@ -1,0 +1,11 @@
+{
+  "@context": "https://www.w3.org/ns/solid/oidc-context.jsonld",
+  "client_id": "https://wallaby-dev.github.io/solid-local-client-id/kiboko-client-id.jsonld",
+  "client_name": "Kiboko (local development)",
+  "redirect_uris": ["http://localhost:17845/callback"],
+  "scope": "openid webid offline_access",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "application_type": "web"
+}
